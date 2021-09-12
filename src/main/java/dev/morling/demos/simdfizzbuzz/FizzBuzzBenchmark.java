@@ -80,4 +80,22 @@ public class FizzBuzzBenchmark {
     public void simdFizzBuzzMasked(MyState state, Blackhole blackhole) {
         blackhole.consume(state.fizzBuzz.simdFizzBuzzMasked(state.values));
     }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void simdFizzBuzzMaskedPreferred(MyState state, Blackhole blackhole) {
+        blackhole.consume(state.fizzBuzz.simdFizzBuzzPreferred(state.values));
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void simdFizzBuzzMasked256(MyState state, Blackhole blackhole) {
+        blackhole.consume(state.fizzBuzz.simdFizzBuzz256(state.values));
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void simdFizzBuzzMasked128(MyState state, Blackhole blackhole) {
+        blackhole.consume(state.fizzBuzz.simdFizzBuzz128(state.values));
+    }
 }

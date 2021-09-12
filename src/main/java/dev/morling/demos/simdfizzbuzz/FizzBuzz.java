@@ -39,6 +39,22 @@ public class FizzBuzz {
                                           -1, 0, 0, -1, -2,
                                           0, -1, 0, 0, -3};
 
+    private static final boolean[] multiplesOf3 = {
+            false, false, true,
+            false, false, true,
+            false, false, true,
+            false, false, true,
+            false, false, true,
+    };
+
+    private static final boolean[] multiplesOf5 = {
+            false, false, false, false, true,
+            false, false, false, false, true,
+            false, false, false, false, true,
+            false, false, false, false, true,
+            false, false, false, false, true,
+    };
+
     public FizzBuzz() {
         List<VectorMask<Integer>> threeMasks = Arrays.asList(
                 VectorMask.<Integer>fromLong(SPECIES, 0b00100100),
@@ -225,5 +241,54 @@ public class FizzBuzz {
         }
 
         return result;
+    }
+
+    int[] simdFizzBuzzPreferred(int[] values) {
+        if(SPECIES == IntVector.SPECIES_256)
+            return simdFizzBuzz256(values);
+        else
+            return simdFizzBuzz128(values);
+    }
+
+    int[] simdFizzBuzz256(int[] values) {
+        VectorMask<Integer> fizzMask = VectorMask.fromArray(IntVector.SPECIES_256, multiplesOf3, 0);
+        VectorMask<Integer> buzzMask = VectorMask.fromArray(IntVector.SPECIES_256, multiplesOf5, 0);
+        VectorMask<Integer> fizzBuzzMask = fizzMask.and(buzzMask);
+        int index = 0;
+        while (index < IntVector.SPECIES_256.loopBound(values.length)) {
+            IntVector vector = IntVector.fromArray(IntVector.SPECIES_256, values, index);
+            vector.blend(FIZZ, fizzMask)
+                    .blend(BUZZ, buzzMask)
+                    .blend(FIZZ_BUZZ, fizzBuzzMask)
+                    .intoArray(values, index);
+            index += IntVector.SPECIES_256.length();
+        }
+        return values;
+    }
+
+    int[] simdFizzBuzz128(int[] values) {
+        VectorMask<Integer> fizzMaskFirst = VectorMask.fromArray(IntVector.SPECIES_128, multiplesOf3, 0);
+        VectorMask<Integer> buzzMaskFirst = VectorMask.fromArray(IntVector.SPECIES_128, multiplesOf5, 0);
+        VectorMask<Integer> fizzBuzzMaskFirst = fizzMaskFirst.and(buzzMaskFirst);
+        VectorMask<Integer> fizzMaskSecond = VectorMask.fromArray(IntVector.SPECIES_128, multiplesOf3, 8);
+        VectorMask<Integer> buzzMaskSecond = VectorMask.fromArray(IntVector.SPECIES_128, multiplesOf5, 8);
+        VectorMask<Integer> fizzBuzzMaskSecond = fizzMaskSecond.and(buzzMaskSecond);
+        int index = 0;
+        while (index < IntVector.SPECIES_128.loopBound(values.length)) {
+            IntVector vectorFirst = IntVector.fromArray(IntVector.SPECIES_128, values, index);
+            vectorFirst.blend(FIZZ, fizzMaskFirst)
+                    .blend(BUZZ, buzzMaskFirst)
+                    .blend(FIZZ_BUZZ, fizzBuzzMaskFirst)
+                    .intoArray(values, index);
+            index += IntVector.SPECIES_128.length();
+
+            IntVector vectorSecond = IntVector.fromArray(IntVector.SPECIES_128, values, index);
+            vectorSecond.blend(FIZZ, fizzMaskSecond)
+                    .blend(BUZZ, buzzMaskSecond)
+                    .blend(FIZZ_BUZZ, fizzBuzzMaskSecond)
+                    .intoArray(values, index);
+            index += IntVector.SPECIES_128.length();
+        }
+        return values;
     }
 }
