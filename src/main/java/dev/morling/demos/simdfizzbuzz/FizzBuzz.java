@@ -45,6 +45,7 @@ public class FizzBuzz {
             false, false, true,
             false, false, true,
             false, false, true,
+            false
     };
 
     private static final boolean[] multiplesOf5 = {
@@ -53,6 +54,7 @@ public class FizzBuzz {
             false, false, false, false, true,
             false, false, false, false, true,
             false, false, false, false, true,
+            false
     };
 
     public FizzBuzz() {
