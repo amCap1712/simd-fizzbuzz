@@ -246,6 +246,16 @@ public class FizzBuzz {
     }
 
     public int[] simdFizzBuzzPreferred(int[] values) {
+        // The rationale here is to test whether Vector size dependent
+        // algorithms can be optimized or not. The FizzBuzz problem can
+        // be solved without it, but I presume there are simd problems that
+        // involve vector size dependent masks or shuffles so on. So, a library
+        // could provide optimal implementation for various vector sizes and
+        // at runtime the intended implementation would be chosen as per the
+        // registers available. Piggybacking on the JIT to optimize away this
+        // check because static finals are being compared. Won't work with just
+        // final's, which is probably fine because for a given run the machine's
+        // preferred vector size will be fixed.
         if(SPECIES == IntVector.SPECIES_256)
             return simdFizzBuzz256(values);
         else
@@ -264,6 +274,9 @@ public class FizzBuzz {
         VectorMask<Integer> buzzMaskSecond = VectorMask.fromArray(IntVector.SPECIES_256, multiplesOf5, offset);
         VectorMask<Integer> fizzBuzzMaskSecond = fizzMaskSecond.and(buzzMaskSecond);
 
+        final boolean[] excludeLast = {true, true, true, true, true, true, true, false};
+        VectorMask<Integer> excludeLastElement = VectorMask.fromArray(IntVector.SPECIES_256, excludeLast, 0);
+
         int index = 0;
         while (index < IntVector.SPECIES_256.loopBound(values.length)) {
             IntVector vectorFirst = IntVector.fromArray(IntVector.SPECIES_256, values, index);
@@ -273,12 +286,12 @@ public class FizzBuzz {
                     .intoArray(result, index);
             index += offset;
 
-            IntVector vectorSecond = IntVector.fromArray(IntVector.SPECIES_256, values, index);
+            IntVector vectorSecond = IntVector.fromArray(IntVector.SPECIES_256, values, index, excludeLastElement);
             vectorSecond.blend(FIZZ, fizzMaskSecond)
                     .blend(BUZZ, buzzMaskSecond)
                     .blend(FIZZ_BUZZ, fizzBuzzMaskSecond)
-                    .intoArray(result, index);
-            index += offset;
+                    .intoArray(result, index, excludeLastElement);
+            index += offset - 1;
         }
 
         scalarFizzBuzzHelper(values, index, result);
@@ -307,6 +320,9 @@ public class FizzBuzz {
         VectorMask<Integer> buzzMaskFourth = VectorMask.fromArray(IntVector.SPECIES_128, multiplesOf5, offset * 3);
         VectorMask<Integer> fizzBuzzMaskFourth = fizzMaskFourth.and(buzzMaskFourth);
 
+        final boolean[] excludeLast = {true, true, true, false};
+        VectorMask<Integer> excludeLastElement = VectorMask.fromArray(IntVector.SPECIES_128, excludeLast, 0);
+
         int index = 0;
         while (index < IntVector.SPECIES_128.loopBound(values.length)) {
             IntVector vectorFirst = IntVector.fromArray(IntVector.SPECIES_128, values, index);
@@ -330,12 +346,12 @@ public class FizzBuzz {
                     .intoArray(result, index);
             index += offset;
 
-            IntVector vectorFourth = IntVector.fromArray(IntVector.SPECIES_128, values, index);
+            IntVector vectorFourth = IntVector.fromArray(IntVector.SPECIES_128, values, index, excludeLastElement);
             vectorFourth.blend(FIZZ, fizzMaskFourth)
                     .blend(BUZZ, buzzMaskFourth)
                     .blend(FIZZ_BUZZ, fizzBuzzMaskFourth)
-                    .intoArray(result, index);
-            index += offset;
+                    .intoArray(result, index, excludeLastElement);
+            index += offset - 1;
         }
 
         scalarFizzBuzzHelper(values, index, result);
