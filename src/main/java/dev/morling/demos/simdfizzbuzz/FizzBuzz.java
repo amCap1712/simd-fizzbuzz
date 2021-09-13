@@ -279,8 +279,9 @@ public class FizzBuzz {
         final boolean[] excludeLast = {true, true, true, true, true, true, true, false};
         VectorMask<Integer> excludeLastElement = VectorMask.fromArray(IntVector.SPECIES_256, excludeLast, 0);
 
+        int upperBound = values.length / 15;
         int index = 0;
-        while (index < IntVector.SPECIES_256.loopBound(values.length)) {
+        for (int j = 0; j < upperBound; j++) {
             IntVector vectorFirst = IntVector.fromArray(IntVector.SPECIES_256, values, index);
             vectorFirst.blend(FIZZ, fizzMaskFirst)
                     .blend(BUZZ, buzzMaskFirst)
@@ -325,8 +326,9 @@ public class FizzBuzz {
         final boolean[] excludeLast = {true, true, true, false};
         VectorMask<Integer> excludeLastElement = VectorMask.fromArray(IntVector.SPECIES_128, excludeLast, 0);
 
+        int upperBound = values.length / 15;
         int index = 0;
-        while (index < IntVector.SPECIES_128.loopBound(values.length)) {
+        for (int j = 0; j < upperBound; j++) {
             IntVector vectorFirst = IntVector.fromArray(IntVector.SPECIES_128, values, index);
             vectorFirst.blend(FIZZ, fizzMaskFirst)
                     .blend(BUZZ, buzzMaskFirst)
